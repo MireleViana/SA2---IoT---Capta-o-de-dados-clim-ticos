@@ -1,0 +1,76 @@
+#include<DHTesp.h>
+#include "WiFi.h"
+#include "HTTPClient.h"
+
+DHTesp dhtSensor;
+
+//const pin da ESP32; const nome da rede, senha e link vinculado
+const int relayPin1 = 14;
+const int relayPin2 = 23;
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+const String url = "https://api.thingspeak.com/update?api_key=35G04G4JE00MWQHV&";
+
+HTTPClient http;
+
+void setup() {
+  
+ // Conectando WiFi:
+  Serial.begin(115200);
+  Serial.println("Iniciando Setup!");
+  WiFi.begin(ssid, password);
+
+  while(WiFi.status()!= WL_CONNECTED){
+    delay(500);
+  Serial.println("Conectando WiFi...");
+
+  dhtSensor.setup(13, DHTesp::DHT22);
+  }
+
+  Serial.println("Finalizando Setup");
+  Serial.println("-----------------");
+
+  pinMode( relayPin1, OUTPUT);
+  pinMode( relayPin2, OUTPUT);
+}
+
+void loop() {
+const int relayPin1 = 14;
+const int relayPin2 = 23;
+
+//capturando temperatura e umidade
+float temperatura = dhtSensor.getTemperature();
+float umidade = dhtSensor.getHumidity();
+
+//String para unir link com os dados
+String path = url + "field1=" + String(temperatura) + "&field2=" + String(umidade);
+
+//GET pra rede:
+ http.begin(path);
+ int httpCode = http.GET();
+ String payload = http.getString();
+
+
+  //imprimindo dados capturados
+  Serial.println("Temperatura:" + String(temperatura) + "C");
+  Serial.println("Umidade:" + String(umidade) + "%");
+  Serial.println("xxxxxxxxxxxxxxxxxxxxxxxx");
+
+  Serial.println("HttpCode" + String(httpCode));
+  Serial.println("Payload: " + payload);
+
+  delay(3000);
+//Ligar Relés
+  digitalWrite( relayPin1, HIGH);
+  delay( 1000);
+  digitalWrite( relayPin1, LOW);
+  delay( 1000);
+  delay(1000);
+
+//Desligar Relés
+  digitalWrite( relayPin2, HIGH);
+  delay( 1000);
+  digitalWrite( relayPin2, LOW);
+  delay( 1000);
+  delay(1000);
+}
